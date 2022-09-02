@@ -20,23 +20,30 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta property="og:type" content="website">
-<meta property="og:title" content="Sansiff&#39;s Blog">
-<meta property="og:url" content="http://example.com/index.html">
+    <meta name="description" content="概述AC自动机 是以 Trie 为结构，结合 KMP 思想对 Trie 上的所有节点构造失配指针构成的。构造出 $fail$ 后就可以用和 KMP 类似的方式进行多模式匹配 以下时用到的一些记号  $n$   —— 模式串的个数 $s_i$  —— 模式串 $(i&#x3D;1,2, \dots,n)$ $N$  —— AC自动机中结点数 $M$ —— 文本串长度  构造 TrieTrie 中的节点表示的是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AC自动机">
+<meta property="og:url" content="http://example.com/2022/09/02/ACAM/index.html">
 <meta property="og:site_name" content="Sansiff&#39;s Blog">
+<meta property="og:description" content="概述AC自动机 是以 Trie 为结构，结合 KMP 思想对 Trie 上的所有节点构造失配指针构成的。构造出 $fail$ 后就可以用和 KMP 类似的方式进行多模式匹配 以下时用到的一些记号  $n$   —— 模式串的个数 $s_i$  —— 模式串 $(i&#x3D;1,2, \dots,n)$ $N$  —— AC自动机中结点数 $M$ —— 文本串长度  构造 TrieTrie 中的节点表示的是">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-09-02T07:19:27.000Z">
+<meta property="article:modified_time" content="2022-09-02T14:57:25.911Z">
 <meta property="article:author" content="Sansiff">
+<meta property="article:tag" content="ACM">
+<meta property="article:tag" content="String">
+<meta property="article:tag" content="自动机">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2022/09/02/ACAM/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":true,"isPost":false,"lang":"zh-CN","comments":"","permalink":"","path":"index.html","title":""}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://example.com/2022/09/02/ACAM/","path":"2022/09/02/ACAM/","title":"AC自动机"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Sansiff's Blog</title>
+<title>AC自动机 | Sansiff's Blog</title>
   
 
 
@@ -66,7 +73,7 @@
 
     <a href="/" class="brand" rel="start">
       <i class="logo-line"></i>
-      <h1 class="site-title">Sansiff's Blog</h1>
+      <p class="site-title">Sansiff's Blog</p>
       <i class="logo-line"></i>
     </a>
   </div>
@@ -98,7 +105,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -111,6 +118,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E9%80%A0-Trie"><span class="nav-number">2.</span> <span class="nav-text">构造 Trie</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B9%BF%E4%B9%89-Border"><span class="nav-number">3.</span> <span class="nav-text">广义 Border</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%B1%E9%85%8D%E6%8C%87%E9%92%88"><span class="nav-number">4.</span> <span class="nav-text">失配指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Trie-%E5%9B%BE"><span class="nav-number">5.</span> <span class="nav-text">Trie 图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E4%B8%B2%E5%8C%B9%E9%85%8D"><span class="nav-number">6.</span> <span class="nav-text">模式串匹配</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fail-%E6%A0%91%E8%AE%A1%E6%95%B0%E4%BC%98%E5%8C%96"><span class="nav-number">7.</span> <span class="nav-text">$fail$ 树计数优化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%8B%E9%A2%98"><span class="nav-number">8.</span> <span class="nav-text">例题</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -162,16 +170,17 @@
 </noscript>
 
 
-    <div class="main-inner index posts-expand">
+    <div class="main-inner post posts-expand">
 
-    
+
+  
 
 
 <div class="post-block">
   
   
 
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/02/ACAM/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -185,13 +194,13 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Sansiff's Blog">
+      <meta itemprop="name" content="AC自动机 | Sansiff's Blog">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/09/02/ACAM/" class="post-title-link" itemprop="url">AC自动机</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          AC自动机
+        </h1>
 
         <div class="post-meta-container">
           <div class="post-meta">
@@ -224,7 +233,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>AC自动机 是以 <strong>Trie</strong> 为结构，结合 <strong>KMP</strong> 思想对 <strong>Trie</strong> 上的所有节点构造失配指针构成的。<br>构造出 $fail$ 后就可以用和 <strong>KMP</strong> 类似的方式进行多模式匹配</p>
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>AC自动机 是以 <strong>Trie</strong> 为结构，结合 <strong>KMP</strong> 思想对 <strong>Trie</strong> 上的所有节点构造失配指针构成的。<br>构造出 $fail$ 后就可以用和 <strong>KMP</strong> 类似的方式进行多模式匹配</p>
 <p>以下时用到的一些记号</p>
 <blockquote>
 <p>$n$   —— 模式串的个数</p>
@@ -268,7 +277,6 @@
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/stdc++.h&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="meta">#<span class="keyword">define</span> all(x) (x).begin(),(x).end()</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N = <span class="number">1e5</span> + <span class="number">10</span>;</span><br><span class="line"><span class="type">int</span> tr[N][<span class="number">26</span>], fail[N], idx, len[N];</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">insert</span><span class="params">(string s)</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> p = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; s.<span class="built_in">size</span>(); i ++) &#123;</span><br><span class="line">    <span class="type">int</span> u = s[i] - <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">    <span class="keyword">if</span> (!tr[p][u]) tr[p][u] = ++ idx;</span><br><span class="line">    p = tr[p][u];</span><br><span class="line">  &#125;</span><br><span class="line">  len[p] = s.<span class="built_in">size</span>();</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">get_fail</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  queue&lt;<span class="type">int</span>&gt; q;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">26</span>; i ++) &#123;</span><br><span class="line">    <span class="keyword">if</span> (tr[<span class="number">0</span>][i]) q.<span class="built_in">push</span>(tr[<span class="number">0</span>][i]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> (q.<span class="built_in">size</span>()) &#123;</span><br><span class="line">    <span class="type">int</span> p = q.<span class="built_in">front</span>(); q.<span class="built_in">pop</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">26</span>; i ++) &#123;</span><br><span class="line">      <span class="keyword">if</span> (tr[p][i]) &#123;</span><br><span class="line">        fail[tr[p][i]] = tr[fail[p]][i];</span><br><span class="line">        q.<span class="built_in">push</span>(tr[p][i]);</span><br><span class="line">      &#125; <span class="keyword">else</span> tr[p][i] = tr[fail[p]][i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">solve</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  string s; cin &gt;&gt; s;</span><br><span class="line">  <span class="type">int</span> n; cin &gt;&gt; n;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i ++) &#123;</span><br><span class="line">    string x; cin &gt;&gt; x;</span><br><span class="line">    <span class="built_in">insert</span>(x);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">get_fail</span>();</span><br><span class="line">  stack&lt;<span class="type">int</span>&gt; st1, st2;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>, p = <span class="number">0</span>; i &lt; s.<span class="built_in">size</span>(); i ++) &#123;</span><br><span class="line">    <span class="type">int</span> u = s[i] - <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">    p = tr[p][u];</span><br><span class="line">    st1.<span class="built_in">push</span>(s[i]), st2.<span class="built_in">push</span>(p);</span><br><span class="line">    <span class="keyword">if</span> (len[p]) &#123;</span><br><span class="line">      string res = <span class="string">&quot;&quot;</span>;</span><br><span class="line">      <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; len[p]; j ++) &#123;</span><br><span class="line">        res += st1.<span class="built_in">top</span>();</span><br><span class="line">        st1.<span class="built_in">pop</span>(), st2.<span class="built_in">pop</span>();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (st2.<span class="built_in">size</span>()) p = st2.<span class="built_in">top</span>();</span><br><span class="line">    <span class="keyword">else</span> p = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  string ans = <span class="string">&quot;&quot;</span>;</span><br><span class="line">  <span class="keyword">while</span> (st1.<span class="built_in">size</span>()) &#123;</span><br><span class="line">    ans += st1.<span class="built_in">top</span>(); st1.<span class="built_in">pop</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">reverse</span>(<span class="built_in">all</span>(ans));</span><br><span class="line">  cout &lt;&lt; ans;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  ios::<span class="built_in">sync_with_stdio</span>(<span class="literal">false</span>);</span><br><span class="line">  cin.<span class="built_in">tie</span>(<span class="literal">nullptr</span>);</span><br><span class="line">  <span class="built_in">solve</span>();</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
-      
     </div>
 
     
@@ -276,118 +284,27 @@
     
 
     <footer class="post-footer">
-        <div class="post-eof"></div>
-      
+          <div class="post-tags">
+              <a href="/tags/ACM/" rel="tag"># ACM</a>
+              <a href="/tags/String/" rel="tag"># String</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E6%9C%BA/" rel="tag"># 自动机</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/08/01/KMP/" rel="prev" title="KMP">
+                  <i class="fa fa-chevron-left"></i> KMP
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
     </footer>
   </article>
 </div>
 
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/01/KMP/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Sansiff">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Sansiff's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Sansiff's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/08/01/KMP/" class="post-title-link" itemprop="url">KMP</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2022-08-01 00:00:00" itemprop="dateCreated datePublished" datetime="2022-08-01T00:00:00+08:00">2022-08-01</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-09-02 22:57:27" itemprop="dateModified" datetime="2022-09-02T22:57:27+08:00">2022-09-02</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/String/" itemprop="url" rel="index"><span itemprop="name">String</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="Border"><a href="#Border" class="headerlink" title="Border"></a>Border</h2><p>约定：字符串 $S$ 的长度为 $n$, $[l,r]$ 的子串是 $S_{l,r}$, 前缀 $S_{1,i} = pre_i$， 后缀 $S_{n - i + 1, n} = suf_i$<br>定义字符串 $S$ 的一个 Border 为一个满足 $pre_i=suf_i$ 的前缀，其中 $S$ 和 $\emptyset$ 也是 $S$ 的 Border<br>记 $S$ 的 Border 集合为 $B(S)$，设最长的 Border 为 $LBorder$</p>
-<h2 id="Period（周期）"><a href="#Period（周期）" class="headerlink" title="Period（周期）"></a>Period（周期）</h2><p>若 $0 &lt; p \le n, S[i] = S[i + p], \forall i \in [1, n]$，则称 $p$ 为 $S$ 的一个 Period<br>记最小 Period 为 $per(S)$<br><em>结论</em>：$p$ 是 $S$ 的 Period $\Leftrightarrow$ $|S|-p$ 是 $S$ 的 Border<br><em>证明</em>：<br>$p$ 是 $S$ 的 Period $\Leftrightarrow S[i-p] = S[i]$<br>$q$ 是 $S$ 的 Border $\Leftrightarrow S[1,q]=S[n-q+1, n] \Leftrightarrow S[1] = S[n-q+1]$<br>令 $i=p+1$ 即可得到 $S[p+1-p]=S[n-q+1]=S[p+1]$ 即<br>$n-q+1=p+1$ 即 $n=p+q$</p>
-<h2 id="Weak-Periodicity-Lemma"><a href="#Weak-Periodicity-Lemma" class="headerlink" title="Weak Periodicity Lemma"></a>Weak Periodicity Lemma</h2><p>若 $p$ 和 $q$ 是 $S$ 的 Period，$p + q \le n$, 则 $gcd(p,q)$ 也是 $S$ 的 Period<br><em>证明</em>:<br>设$p &lt; q$, 记 $d=q-p$<br>若 $i&gt;p$, 则 $i-p&gt;0$, 故 $S[i]=S[i-p]=S[i-p+q]=S[i-d]$<br>若 $i \le p$, 则 $i+q\le n$, 故 $S[i]=S[i+q]=S[i+q-p]=S[i-d]$<br>因此, $d$ 也是 $S$ 的 Period, 更相减损, 故得证</p>
-<h2 id="Periodicity-Lemma"><a href="#Periodicity-Lemma" class="headerlink" title="Periodicity Lemma"></a>Periodicity Lemma</h2><p>若 $p, q$ 是 $S$ 的 Period，且 $p + q \le |S| + gcd(p, q)$ ，则 $gcd(p,q)$ 也是 $|S|$ 的一个Period<br><del>证明看起来非常复杂</del></p>
-<h2 id="LBorder"><a href="#LBorder" class="headerlink" title="LBorder"></a>LBorder</h2><p>对于一个字符串 $p$，$p$ 的 Border 的 Border 也是 $p$ 的 Borde，因此可以通过$p[i - 1]$ 的最长 Border 来推出 $p[i]$ 的最长 Border<br>不妨令 $p[1, j] = p[i - j, i - 1]$ ($p[1,j]$ 为 $p[i - 1]$ 的最长 Border)，$next[j]$ 为 $p[j]$ 的最长 Border长度：</p>
-<ol>
-<li>若 $p[j + 1] = p[i]$， 则：$j = j + 1，next[i] = j$  </li>
-<li>若 $p[j + 1] \ne p[i]$ ，则令 $j$ 跳到 $next[j]$ 再次进行匹配<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">2</span>, j = <span class="number">0</span>; i &lt;= n; i ++)&#123;</span><br><span class="line">    <span class="keyword">while</span>(j &amp;&amp; p[i] != p[j + <span class="number">1</span>]) j = next[j];</span><br><span class="line">    <span class="keyword">if</span>(p[i] == p[j + <span class="number">1</span>]) j ++;</span><br><span class="line">    next[i] = j;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-这段代码也可以理解为： 让 $p$ 后移一位变为 $p’$，然后让 $p’$ 的前缀去匹配 $p$ 的后缀（自己匹配自己）</li>
-</ol>
-<h2 id="KMP-匹配"><a href="#KMP-匹配" class="headerlink" title="KMP 匹配"></a>KMP 匹配</h2><p>对于文本串 $s$ ，模式串 $p$，若 $s[i - j, i - 1] = p[1, j]$，即模式串的前缀 $j$ 已经匹配成功<br>如果 $s[i] \ne p[j + 1]$，那么只需要令 $j$ 跳到 $next[j]$ 再次进行匹配<br>如果 $s[i] = p[j + 1]$，说明可以匹配则令 $j = j + 1$ ，如果 $j = n$ 说明模式串匹配成功 </p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>, j = <span class="number">0</span> ; i &lt;= m; i ++)&#123;</span><br><span class="line">    <span class="keyword">while</span>(j &amp;&amp; s[i] != p[j + <span class="number">1</span>]) j = next[j];</span><br><span class="line">    <span class="keyword">if</span>(s[i] == p[j + <span class="number">1</span>]) j ++;</span><br><span class="line">    <span class="keyword">if</span>(j == n)&#123;</span><br><span class="line">        cout &lt;&lt; i - j + <span class="number">1</span> &lt;&lt; <span class="string">&quot;\n&quot;</span>; </span><br><span class="line">        j = next[j];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="例题"><a href="#例题" class="headerlink" title="例题"></a>例题</h2><p><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/problem/P3375">P3375 【模板】KMP字符串匹配 </a></p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/stdc++.h&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N = <span class="number">1e5</span> + <span class="number">10</span>;</span><br><span class="line"><span class="type">int</span> ne[N], n, m;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    string s, p; cin &gt;&gt; s &gt;&gt; p;</span><br><span class="line">    m = s.<span class="built_in">length</span>(), n = p.<span class="built_in">length</span>();</span><br><span class="line">    s = <span class="string">&quot; &quot;</span> + s, p = <span class="string">&quot; &quot;</span> + p;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">2</span>, j = <span class="number">0</span>; i &lt;= n; i ++)&#123;</span><br><span class="line">        <span class="keyword">while</span>(j &amp;&amp; p[i] != p[j + <span class="number">1</span>]) j = ne[j];</span><br><span class="line">        <span class="keyword">if</span>(p[i] == p[j + <span class="number">1</span>]) j ++;</span><br><span class="line">        ne[i] = j;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>, j = <span class="number">0</span>; i &lt;= m; i ++)&#123;</span><br><span class="line">        <span class="keyword">while</span>(j &amp;&amp; s[i] != p[j + <span class="number">1</span>]) j = ne[j];</span><br><span class="line">        <span class="keyword">if</span>(s[i] == p[j + <span class="number">1</span>]) j ++;</span><br><span class="line">        <span class="keyword">if</span>(j == n)&#123;</span><br><span class="line">            cout &lt;&lt; i - j + <span class="number">1</span> &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">            j = ne[j];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i ++)&#123;</span><br><span class="line">        cout &lt;&lt; ne[i] &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><a target="_blank" rel="noopener" href="https://codeforces.com/problemset/problem/1200/E">Problem - 1200E - Codeforces</a><br>将 $n$ 个字符串合并成一个字符串。合并两个字符串 $A$, $B$ 时，删除 $B$ 中与 $A$ 的后缀重合的最长前缀，比如将 “sample” 和 “please” 合并为 “samplease”<br>很容易想到将 $B$ 拼到 $A$ 的前面，这样形成 $BA$ 只需要找到这个字符串的最长 border 长度，合并时删去这个 border 就好了。（注意合并时候为了防止越界在中间加一个特殊字符）</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">kmp</span><span class="params">(string s)</span></span>&#123;</span><br><span class="line">	<span class="type">int</span> n = s.<span class="built_in">length</span>();</span><br><span class="line">	<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">2</span>, j = <span class="number">0</span>; i &lt;= n; i ++)&#123;</span><br><span class="line">		<span class="keyword">while</span>(j &amp;&amp; s[i] != s[j + <span class="number">1</span>]) j = ne[j];</span><br><span class="line">		<span class="keyword">if</span>(s[i] == s[j + <span class="number">1</span>]) j ++;</span><br><span class="line">		ne[i] = j;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> ne[n - <span class="number">1</span>];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">solve</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="type">int</span> n; cin &gt;&gt; n;</span><br><span class="line">	string ans, x;</span><br><span class="line">	cin &gt;&gt; x; ans = x;</span><br><span class="line">	<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>; i &lt; n; i ++)&#123;</span><br><span class="line">		cin &gt;&gt; x;</span><br><span class="line">		string t = <span class="string">&quot; &quot;</span> + x + <span class="string">&quot;^^&quot;</span> + ans;</span><br><span class="line">		<span class="type">int</span> tmp = <span class="built_in">kmp</span>(t);</span><br><span class="line">		ans = ans + x.<span class="built_in">substr</span>(tmp);</span><br><span class="line">	&#125;</span><br><span class="line">	cout &lt;&lt; ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后T了， 考虑到每一次合并的 ans 比较长，而且 ans 前面的字符对答案没有贡献<br>比如：$abfdsarsewfvdsarreab$ 和 $aba$ 拼在一起的时候前面只需要保留 ans 的后三位，$abaeab$ 即可</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> len = <span class="built_in">min</span>(ans.<span class="built_in">size</span>(), x.<span class="built_in">size</span>());</span><br><span class="line">string t = x + <span class="string">&quot;^^&quot;</span> + ans.<span class="built_in">substr</span>(l1 - len);</span><br></pre></td></tr></table></figure>
-<p>当然这样还是T了<br>又犯了一个犯了很多次的错误 不应该直接这样拼接，换成+=就成功过掉了（再犯这个错误就紫砂）</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">string t = x;</span><br><span class="line">t += <span class="string">&quot;^^&quot;</span>;</span><br><span class="line">t += ans.<span class="built_in">substr</span>(l1 - len);</span><br></pre></td></tr></table></figure>
-
-<p>在字符串 $s$ 中，重复删除同一个字串 $t$。直到 $t$ 不再是 $s$ 的字串为止，$|s|\le10^6$<br>考虑用一个栈来维护 $s$, 和 $t$ 匹配成功后就将匹配的部分弹出。这样看起来就很对，但是样例没跑过。<br>问题在忽略了删除后两边重新凑成 $t$ 的情况，那么用一个数组记录一下 $s[i]$ 已经匹配到的 $t$ 的位置（类似于next数组），匹配成功后弹出相应的部分，$j$ 跳到栈首位置匹配到 $t$ 的位置就可以啦</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">solve</span><span class="params">()</span></span>&#123;</span><br><span class="line">	string s, p; cin &gt;&gt; s &gt;&gt; p;</span><br><span class="line">	<span class="type">int</span> n = p.<span class="built_in">size</span>(), m = s.<span class="built_in">size</span>();</span><br><span class="line">	p = <span class="string">&quot; &quot;</span> + p, s = <span class="string">&quot; &quot;</span> + s;</span><br><span class="line">	<span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">ne</span><span class="params">(n + <span class="number">100</span>)</span>, <span class="title">f</span><span class="params">(m + <span class="number">100</span>)</span></span>;</span><br><span class="line">	<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">2</span>, j = <span class="number">0</span>; i &lt;= n; i ++)&#123;</span><br><span class="line">		<span class="keyword">while</span>(j &amp;&amp; p[j + <span class="number">1</span>] != p[i]) j = ne[j];</span><br><span class="line">		<span class="keyword">if</span>(p[j + <span class="number">1</span>] == p[i]) j ++;</span><br><span class="line">		ne[i] = j;</span><br><span class="line">	&#125;</span><br><span class="line">	stack&lt;<span class="type">int</span>&gt; st;</span><br><span class="line">	<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>, j = <span class="number">0</span>; i &lt;= m; i ++)&#123;</span><br><span class="line">		<span class="keyword">while</span>(j &amp;&amp; s[i] != p[j + <span class="number">1</span>]) j = ne[j];</span><br><span class="line">		<span class="keyword">if</span>(s[i] == p[j + <span class="number">1</span>]) j ++;</span><br><span class="line">		f[i] = j;</span><br><span class="line">		st.<span class="built_in">push</span>(i);</span><br><span class="line">		<span class="keyword">if</span>(j == n)&#123;</span><br><span class="line">			<span class="keyword">for</span>(<span class="type">int</span> x = <span class="number">0</span>; x &lt; n; x ++) st.<span class="built_in">pop</span>();</span><br><span class="line">			<span class="keyword">if</span>(st.<span class="built_in">size</span>()) j = f[st.<span class="built_in">top</span>()];</span><br><span class="line">			<span class="keyword">else</span> j = <span class="number">0</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	string ans = <span class="string">&quot;&quot;</span>;</span><br><span class="line">	<span class="keyword">while</span>(st.<span class="built_in">size</span>())&#123;</span><br><span class="line">		ans += s[st.<span class="built_in">top</span>()]; st.<span class="built_in">pop</span>();</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">reverse</span>(<span class="built_in">all</span>(ans));</span><br><span class="line">	cout &lt;&lt; ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
 
 
 
