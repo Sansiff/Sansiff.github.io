@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"sansiff.github.i","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="操作系统面经内核的作用 进程调度，管理进程、线程，决定哪个进程、线程使用CPU 内存管理，管理内存的分配和回收 硬件设备管理，为进程与硬件设备之间提供通信能力 提供系统调用  内存管理程序的局部性原理 时间局部性：如果程序中的某条指令被执行，则不久后该指令可能被再次执行；如果某块数据被访问，则不久后该数据可能再次被访问 空间局部性：程序访问了某个存储单元，则不久后其附近的存储单元也将被访问  内存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统面经">
+<meta property="og:url" content="http://sansiff.github.i/2023/10/09/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E7%BB%8F/index.html">
+<meta property="og:site_name" content="Sansiff&#39;s Blog">
+<meta property="og:description" content="操作系统面经内核的作用 进程调度，管理进程、线程，决定哪个进程、线程使用CPU 内存管理，管理内存的分配和回收 硬件设备管理，为进程与硬件设备之间提供通信能力 提供系统调用  内存管理程序的局部性原理 时间局部性：如果程序中的某条指令被执行，则不久后该指令可能被再次执行；如果某块数据被访问，则不久后该数据可能再次被访问 空间局部性：程序访问了某个存储单元，则不久后其附近的存储单元也将被访问  内存">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="c:/Users/ISSAC/Desktop/recruit/resource/pictures/传统文件传输.webp">
+<meta property="og:image" content="c:/Users/ISSAC/Desktop/recruit/resource/pictures/senfile-零拷贝.webp">
+<meta property="article:published_time" content="2023-10-09T02:14:41.000Z">
+<meta property="article:modified_time" content="2023-10-09T02:15:49.907Z">
+<meta property="article:author" content="Sansiff">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="面经">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="c:/Users/ISSAC/Desktop/recruit/resource/pictures/传统文件传输.webp">
+
+<link rel="canonical" href="http://sansiff.github.i/2023/10/09/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E7%BB%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>操作系统面经 | Sansiff's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Sansiff's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://sansiff.github.i/2023/10/09/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E7%BB%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Sansiff">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Sansiff's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          操作系统面经
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-10-09 10:14:41 / 修改时间：10:15:49" itemprop="dateCreated datePublished" datetime="2023-10-09T10:14:41+08:00">2023-10-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E9%9D%A2%E7%BB%8F/" itemprop="url" rel="index"><span itemprop="name">面经</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="操作系统面经"><a href="#操作系统面经" class="headerlink" title="操作系统面经"></a>操作系统面经</h1><h3 id="内核的作用"><a href="#内核的作用" class="headerlink" title="内核的作用"></a>内核的作用</h3><ol>
+<li>进程调度，管理进程、线程，决定哪个进程、线程使用CPU</li>
+<li>内存管理，管理内存的分配和回收</li>
+<li>硬件设备管理，为进程与硬件设备之间提供通信能力</li>
+<li>提供系统调用</li>
+</ol>
+<h2 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h2><h3 id="程序的局部性原理"><a href="#程序的局部性原理" class="headerlink" title="程序的局部性原理"></a>程序的局部性原理</h3><ul>
+<li>时间局部性：如果程序中的某条指令被执行，则不久后该指令可能被再次执行；如果某块数据被访问，则不久后该数据可能再次被访问</li>
+<li>空间局部性：程序访问了某个存储单元，则不久后其附近的存储单元也将被访问</li>
+</ul>
+<h3 id="内存分段-分页的问题"><a href="#内存分段-分页的问题" class="headerlink" title="内存分段/分页的问题"></a>内存分段/分页的问题</h3><p>内存分段会产生内存碎片；会产生swap分区，导致内存交换的效率低</p>
+<p>内存分页是把整个虚拟和物理内存空间切成一段段固定尺寸的大小（Linux下，每一段的大小为4KB）。这样一个连续并且尺寸固定的内存空间，叫页（Page）。虚拟地址和物理地址之间通过页表来映射。如果进程访问的虚拟地址在页表中查不到时，系统会产生一个缺页中断，进入内核态分配物理内存、更新进程页表然后返回用户态，恢复进程的运行</p>
+<h3 id="虚拟内存的作用"><a href="#虚拟内存的作用" class="headerlink" title="虚拟内存的作用"></a>虚拟内存的作用</h3><ol>
+<li>虚拟内存可以让进程对运行内存超过物理内存大小。对于哪些没有经常被使用到的内存，可以把它换出到物理内存之外（swap）</li>
+<li>每个进程都有自己的页表，不可以访问其他进程的页表。可以解决多进程之间地址冲突的问题</li>
+</ol>
+<h3 id="malloc申请的是物理内存吗"><a href="#malloc申请的是物理内存吗" class="headerlink" title="malloc申请的是物理内存吗"></a>malloc申请的是物理内存吗</h3><p>malloc申请到的是虚拟内存。如果申请到的虚拟内存没有被访问的话，虚拟内存是不会映射到物理内存的，这样就不会占用物理内存。</p>
+<h3 id="malloc会有两种方式申请内存"><a href="#malloc会有两种方式申请内存" class="headerlink" title="malloc会有两种方式申请内存"></a>malloc会有两种方式申请内存</h3><ol>
+<li>通过 brk() 系统调用从堆分配内存：通过 brk() 函数将堆顶指针向高地址移动，获得新的内存空间</li>
+<li>通过 mmap() 系统调用在文件映射区域分配内存</li>
+</ol>
+<p>malloc() 源码里默认定义了一个阈值：如果用户分配的内存小于128KB，通过 brk() 申请内存，否则通过 mmap() 申请</p>
+<h3 id="malloc-申请的内存，free后会归还给操作系统吗"><a href="#malloc-申请的内存，free后会归还给操作系统吗" class="headerlink" title="malloc 申请的内存，free后会归还给操作系统吗"></a>malloc 申请的内存，free后会归还给操作系统吗</h3><ol>
+<li>通过 brk() 申请的内存，free释放内存的时候并不会归还</li>
+<li>通过 mmap() 申请的内存，会归还</li>
+</ol>
+<p>由于 mmap 的内存每次释放都会归还给OS，于是每次 mmap 分配的虚拟地址都是缺页状态的，每次运行都会触发缺页中断；</p>
+<p>brk 不会释放掉内存，而是开辟内存池，再申请内存时直接从内存池里取，减少了系统调用和缺页中断的次数。但是对于小块内存，堆内会产生越来越多的可用的内存碎片，导致内存泄漏。所以会堆大内存使用 mmap， 小内存使用 brk</p>
+<h3 id="物理内存怎么回收"><a href="#物理内存怎么回收" class="headerlink" title="物理内存怎么回收"></a>物理内存怎么回收</h3><p>回收内存有两种方式</p>
+<ol>
+<li>后台内存回收，唤醒 kswapd 内核线程，异步回收，不会阻塞进程。</li>
+<li>直接内存回收，同步回收，阻塞进程。</li>
+</ol>
+<p>可被回收的内存类型有文件页和匿名页两种</p>
+<ol>
+<li>文件页的回收：对于干净页直接释放内存；对于脏页需要先写回到磁盘再释放内存</li>
+<li>匿名页的回收：swap机制将不常访问的匿名页换出到磁盘中，下次访问时再换入到内存</li>
+</ol>
+<p>如果这样释放的内存都不够的话就会使用 OOM(Out of Memory) 机制：OOM Killer 会不断杀死进程然后释放进程的内存，直到释放足够的内存空间。</p>
+<h3 id="面对-预读失效-缓存污染-LRU的改进措施"><a href="#面对-预读失效-缓存污染-LRU的改进措施" class="headerlink" title="面对 预读失效/缓存污染 LRU的改进措施"></a>面对 预读失效/缓存污染 LRU的改进措施</h3><p>Linux实现了两个LRU：active_list, inactive_list</p>
+<ul>
+<li>active_list 存放的是最近被访问过的（活跃）的内存页</li>
+<li>inactive_list 存放的是不活跃的内存页</li>
+</ul>
+<p>预读页加入到inactive_list，当页被真正访问的时候才加入active_list</p>
+<p>Mysql 将 LRU 划分为 young 和 old 两段同上</p>
+<p>为了避免缓存污染，需要提高进入活跃 LRU 的门槛</p>
+<ul>
+<li>Linux：当内存页被访问第二次时，才将页从 inactive_list 升级到 active_list</li>
+<li>Mysql:  当内存页的第二次访问时间和第一次访问时间超过1秒，才会从 old 升级到 young</li>
+</ul>
+<h2 id="CPU相关"><a href="#CPU相关" class="headerlink" title="CPU相关"></a>CPU相关</h2><h3 id="如何写出让CPU跑的更快的代码"><a href="#如何写出让CPU跑的更快的代码" class="headerlink" title="如何写出让CPU跑的更快的代码"></a>如何写出让CPU跑的更快的代码</h3><ol>
+<li>提高数据缓存的命中率：按照内存布局顺序访问可以提高CPU Cache命中率；</li>
+<li>提高指令缓存的命中率：分支预测</li>
+<li>提高多核CPU的缓存命中率：把线程绑定在某一个CPU核心上</li>
+</ol>
+<h2 id="进程管理"><a href="#进程管理" class="headerlink" title="进程管理"></a>进程管理</h2><h3 id="进程的状态"><a href="#进程的状态" class="headerlink" title="进程的状态"></a>进程的状态</h3><p>创建状态、就绪状态、运行状态、结束状态、阻塞状态</p>
+<h3 id="进程的控制结构"><a href="#进程的控制结构" class="headerlink" title="进程的控制结构"></a>进程的控制结构</h3><p>OS中，使用进程控制块（process control block，PCB）数据结构来描述进程</p>
+<p>PCB是进程存在的唯一标识，包含了进程描述信息、进程控制和管理信息，资源分配清单、CPU相关信息。</p>
+<p>因为可能面临进程创建，销毁等调度导致进程状态发生变化，PCB常使用链表的方式进行组织：</p>
+<ul>
+<li>处于就绪状态的进程链接，就绪队列</li>
+<li>处于等待状态的进程链接，阻塞队列</li>
+</ul>
+<h3 id="进程的控制"><a href="#进程的控制" class="headerlink" title="进程的控制"></a>进程的控制</h3><p>创建进程：申请一块空白的PCB，分配运行时所需的资源，插入就绪队列</p>
+<p>终止进程：找到PCB，如果处于执行状态则立刻终止；如果有子进程，则将该进程的子进程交由1号进程接管；将该进程的资源释放；从PCB所在的队列中删除</p>
+<p>阻塞进程：找到PCB，如果处于运行状态则保护现场，转为阻塞态，停止运行；将PCB插入阻塞队列中</p>
+<p>唤醒进程：找到PCB，从阻塞队列移出，状态置为就绪状态，插入就绪队列中</p>
+<h3 id="进程、线程的上下文切换"><a href="#进程、线程的上下文切换" class="headerlink" title="进程、线程的上下文切换"></a>进程、线程的上下文切换</h3><p>进程的上下文切换包含了虚拟内存、栈、全局变量等用户空间的资源，还包含了内核堆栈、寄存器等内核空间资源</p>
+<p>同一个进程间线程的上下文切换只需要切换栈和寄存器等不共享的数据</p>
+<p>不同进程间线程的上下文切换就是进程的上下文切换</p>
+<h3 id="进程和线程的区别"><a href="#进程和线程的区别" class="headerlink" title="进程和线程的区别"></a>进程和线程的区别</h3><ol>
+<li>进程是资源分配的单位，线程是CPU调度的单位</li>
+<li>进程拥有一个完整的资源平台，线程只独享寄存器和栈</li>
+</ol>
+<p>线程能减少并发执行的时间和空间开销：</p>
+<ol>
+<li>线程的创建比进程快：线程的创建不会涉及到资源管理信息，而是直接共享。</li>
+<li>线程的终止时间比进程快：释放的资源少</li>
+<li>同一个进程内的切换比进程切换快：进程需要切换页表</li>
+<li>同一个进程内的线程间共享内存和文件资源，所以线程间通信不需要经过内核</li>
+</ol>
+<h3 id="进程的调度算法"><a href="#进程的调度算法" class="headerlink" title="进程的调度算法"></a>进程的调度算法</h3><p>这里的进程可以理解为进程里的主线程（命名历史遗留问题）</p>
+<ol>
+<li>先来先服务（First Come First Server，FCFS）</li>
+<li>最短作业优先（Shortest Job First，SJF）</li>
+<li>高相应比优先（Highest Response Ratio Next，HRRN），按照<mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -1.158ex;" xmlns="http://www.w3.org/2000/svg" width="15.038ex" height="3.447ex" role="img" focusable="false" viewBox="0 -1011.8 6647 1523.5"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mfrac"><g data-mml-node="mrow" transform="translate(220,481.4) scale(0.707)"><g data-mml-node="mi"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">等</text></g><g data-mml-node="mi" transform="translate(1000,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">待</text></g><g data-mml-node="mi" transform="translate(2000,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">时</text></g><g data-mml-node="mi" transform="translate(3000,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">间</text></g><g data-mml-node="mo" transform="translate(4000,0)"><path data-c="2B" d="M56 237T56 250T70 270H369V420L370 570Q380 583 389 583Q402 583 409 568V270H707Q722 262 722 250T707 230H409V-68Q401 -82 391 -82H389H387Q375 -82 369 -68V230H70Q56 237 56 250Z"></path></g><g data-mml-node="mi" transform="translate(4778,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">服</text></g><g data-mml-node="mi" transform="translate(5778,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">务</text></g><g data-mml-node="mi" transform="translate(6778,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">时</text></g><g data-mml-node="mi" transform="translate(7778,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">间</text></g></g><g data-mml-node="mrow" transform="translate(1909.3,-370.3) scale(0.707)"><g data-mml-node="mi"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">服</text></g><g data-mml-node="mi" transform="translate(1000,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">务</text></g><g data-mml-node="mi" transform="translate(2000,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">时</text></g><g data-mml-node="mi" transform="translate(3000,0)"><text data-variant="normal" transform="scale(1,-1)" font-size="884px" font-family="serif">间</text></g></g><rect width="6407" height="60" x="120" y="220"></rect></g></g></g></svg></mjx-container>排序执行</li>
+<li>时间片轮转（Round Robin，RR）</li>
+<li>最高优先级（Hightest Priority First，HPF）</li>
+<li>多级反馈队列（Multilevel Feedback Queue）</li>
+</ol>
+<h3 id="进程间通信"><a href="#进程间通信" class="headerlink" title="进程间通信"></a>进程间通信</h3><ol>
+<li>管道，内核态的一段缓存</li>
+<li>共享内存，两个进程的虚拟内存映射到一段物理内存上</li>
+<li>消息队列，内核态的消息链表</li>
+<li>信号量：PV操作 临界资源</li>
+<li>socket</li>
+<li>信号</li>
+</ol>
+<h2 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h2><h3 id="互斥锁和自旋锁"><a href="#互斥锁和自旋锁" class="headerlink" title="互斥锁和自旋锁"></a>互斥锁和自旋锁</h3><ul>
+<li><p>互斥锁加锁失败后，线程会阻塞，直到被唤醒</p>
+</li>
+<li><p>自旋锁加锁失败后，线程会忙等待，直到它拿到锁</p>
+</li>
+</ul>
+<p>互斥锁会有两次线程上下文切换的开销，所以如果确保锁住的代码执行时间很短，就应该选择自旋锁；如果锁住的代码执行时间很长，自旋锁会忙等待消耗CPU资源，这时候应该选择互斥锁</p>
+<h3 id="读写锁"><a href="#读写锁" class="headerlink" title="读写锁"></a>读写锁</h3><ul>
+<li>当写锁没有被持有时，多个线程能够并发的持有读锁</li>
+<li>当写锁被持有时，写锁和读锁都会被堵塞</li>
+</ul>
+<p>不管是读优先还是写优先都会导致有线程饿死，因此将线程用队列维护分配读写锁</p>
+<h3 id="乐观锁和悲观锁"><a href="#乐观锁和悲观锁" class="headerlink" title="乐观锁和悲观锁"></a>乐观锁和悲观锁</h3><ul>
+<li>悲观锁在访问共享资源前要上锁</li>
+<li>乐观锁先修改共享资源，如果发现这段时间这个资源被别的线程修改过，就放弃本次操作</li>
+</ul>
+<p>互斥锁、自旋锁、读写锁都是悲观锁</p>
+<p>只有当冲突概率非常低，且加锁成本非常高的场景才考虑使用乐观锁</p>
+<h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><p>死锁只有满足四个条件才会发生</p>
+<ol>
+<li>互斥条件：多个线程不能同时使用同一个资源</li>
+<li>持有并等待条件：持有资源并且在等待别的资源</li>
+<li>不可剥夺条件：持有的资源在使用完之前不会释放</li>
+<li>环路等待条件：两个线程获取资源的顺序够成环行链</li>
+</ol>
+<p>避免死锁的发生就是破坏四个必要条件，最常用的就是用资源有序分配来破坏环路等待</p>
+<h2 id="IO相关"><a href="#IO相关" class="headerlink" title="IO相关"></a>IO相关</h2><h3 id="传统文件传输为什么性能很差"><a href="#传统文件传输为什么性能很差" class="headerlink" title="传统文件传输为什么性能很差"></a>传统文件传输为什么性能很差</h3><p>传统文件传输发生了4次用户态和内核态的上下文切换（read，write），发生了4次数据拷贝：</p>
+<ol>
+<li>把磁盘上的数据拷贝到操作系统内核缓冲区</li>
+<li>把操作系统内核缓冲区的数据拷贝到用户缓冲区</li>
+<li>把用户缓冲区的数据拷贝到socket缓冲区</li>
+<li>把socket缓冲区的数据拷贝到网卡缓冲区</li>
+</ol>
+<p><img src="C:\Users\ISSAC\Desktop\recruit\resource\pictures\传统文件传输.webp" alt=""></p>
+<h3 id="零拷贝"><a href="#零拷贝" class="headerlink" title="零拷贝"></a>零拷贝</h3><p>优化文件传输性能就要减少上下文切换次数，减少系统调用的次数</p>
+<p><img src="C:\Users\ISSAC\Desktop\recruit\resource\pictures\senfile-零拷贝.webp" alt="senfile-零拷贝"></p>
+<p>零拷贝（Zero-copy）技术只需要2次上下文切换，2次数据拷贝过程，并且都是由DMA来搬运，可以将文件传输性能提高一倍以上</p>
+<h2 id="Linux相关"><a href="#Linux相关" class="headerlink" title="Linux相关"></a>Linux相关</h2><h3 id="Linux权限"><a href="#Linux权限" class="headerlink" title="Linux权限"></a>Linux权限</h3><ol>
+<li>r（读权限）：4</li>
+<li>w（写权限）：2</li>
+<li>x（执行权限）：1</li>
+</ol>
+<p>权限分为文件所有者的权限，文件所有者所在组的权限，其他权限</p>
+<ol>
+<li><p>操作系统是如何看待一个进程的</p>
+</li>
+<li><p>进程和线程有什么区别</p>
+</li>
+<li>进程间的切换涉及到哪些资源的切换</li>
+<li>缺页中断</li>
+<li></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+              <a href="/tags/%E9%9D%A2%E7%BB%8F/" rel="tag"># 面经</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/03/23/IO%E5%A4%8D%E7%94%A8/" rel="prev" title="IO复用">
+      <i class="fa fa-chevron-left"></i> IO复用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/10/09/learngitbranching/" rel="next" title="learngitbranching">
+      learngitbranching <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%9D%A2%E7%BB%8F"><span class="nav-number">1.</span> <span class="nav-text">操作系统面经</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">1.0.1.</span> <span class="nav-text">内核的作用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="nav-number">1.1.</span> <span class="nav-text">内存管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%8B%E5%BA%8F%E7%9A%84%E5%B1%80%E9%83%A8%E6%80%A7%E5%8E%9F%E7%90%86"><span class="nav-number">1.1.1.</span> <span class="nav-text">程序的局部性原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E6%AE%B5-%E5%88%86%E9%A1%B5%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.2.</span> <span class="nav-text">内存分段&#x2F;分页的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">1.1.3.</span> <span class="nav-text">虚拟内存的作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#malloc%E7%94%B3%E8%AF%B7%E7%9A%84%E6%98%AF%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E5%90%97"><span class="nav-number">1.1.4.</span> <span class="nav-text">malloc申请的是物理内存吗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#malloc%E4%BC%9A%E6%9C%89%E4%B8%A4%E7%A7%8D%E6%96%B9%E5%BC%8F%E7%94%B3%E8%AF%B7%E5%86%85%E5%AD%98"><span class="nav-number">1.1.5.</span> <span class="nav-text">malloc会有两种方式申请内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#malloc-%E7%94%B3%E8%AF%B7%E7%9A%84%E5%86%85%E5%AD%98%EF%BC%8Cfree%E5%90%8E%E4%BC%9A%E5%BD%92%E8%BF%98%E7%BB%99%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%90%97"><span class="nav-number">1.1.6.</span> <span class="nav-text">malloc 申请的内存，free后会归还给操作系统吗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E6%80%8E%E4%B9%88%E5%9B%9E%E6%94%B6"><span class="nav-number">1.1.7.</span> <span class="nav-text">物理内存怎么回收</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%A2%E5%AF%B9-%E9%A2%84%E8%AF%BB%E5%A4%B1%E6%95%88-%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93-LRU%E7%9A%84%E6%94%B9%E8%BF%9B%E6%8E%AA%E6%96%BD"><span class="nav-number">1.1.8.</span> <span class="nav-text">面对 预读失效&#x2F;缓存污染 LRU的改进措施</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU%E7%9B%B8%E5%85%B3"><span class="nav-number">1.2.</span> <span class="nav-text">CPU相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%86%99%E5%87%BA%E8%AE%A9CPU%E8%B7%91%E7%9A%84%E6%9B%B4%E5%BF%AB%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="nav-number">1.2.1.</span> <span class="nav-text">如何写出让CPU跑的更快的代码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86"><span class="nav-number">1.3.</span> <span class="nav-text">进程管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="nav-number">1.3.1.</span> <span class="nav-text">进程的状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%8E%A7%E5%88%B6%E7%BB%93%E6%9E%84"><span class="nav-number">1.3.2.</span> <span class="nav-text">进程的控制结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%8E%A7%E5%88%B6"><span class="nav-number">1.3.3.</span> <span class="nav-text">进程的控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E3%80%81%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">1.3.4.</span> <span class="nav-text">进程、线程的上下文切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.3.5.</span> <span class="nav-text">进程和线程的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.6.</span> <span class="nav-text">进程的调度算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1"><span class="nav-number">1.3.7.</span> <span class="nav-text">进程间通信</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%81%E6%9C%BA%E5%88%B6"><span class="nav-number">1.4.</span> <span class="nav-text">锁机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%92%E6%96%A5%E9%94%81%E5%92%8C%E8%87%AA%E6%97%8B%E9%94%81"><span class="nav-number">1.4.1.</span> <span class="nav-text">互斥锁和自旋锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%BB%E5%86%99%E9%94%81"><span class="nav-number">1.4.2.</span> <span class="nav-text">读写锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%90%E8%A7%82%E9%94%81%E5%92%8C%E6%82%B2%E8%A7%82%E9%94%81"><span class="nav-number">1.4.3.</span> <span class="nav-text">乐观锁和悲观锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%BB%E9%94%81"><span class="nav-number">1.4.4.</span> <span class="nav-text">死锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IO%E7%9B%B8%E5%85%B3"><span class="nav-number">1.5.</span> <span class="nav-text">IO相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93%E4%B8%BA%E4%BB%80%E4%B9%88%E6%80%A7%E8%83%BD%E5%BE%88%E5%B7%AE"><span class="nav-number">1.5.1.</span> <span class="nav-text">传统文件传输为什么性能很差</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%B6%E6%8B%B7%E8%B4%9D"><span class="nav-number">1.5.2.</span> <span class="nav-text">零拷贝</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux%E7%9B%B8%E5%85%B3"><span class="nav-number">1.6.</span> <span class="nav-text">Linux相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux%E6%9D%83%E9%99%90"><span class="nav-number">1.6.1.</span> <span class="nav-text">Linux权限</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Sansiff</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sansiff</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
