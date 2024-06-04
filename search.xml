@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>CSAPP</title>
+    <url>/2024/06/02/csapp/</url>
+    <content><![CDATA[<p>这是一篇督促我学习CSAPP的文章，我将会在这个文章中记录我学习CSAPP过程中产生的笔记以及做每一个CSAPP Lab的总结。</p>
+<h2 id="LAB"><a href="#LAB" class="headerlink" title="LAB"></a>LAB</h2><p><a href="http://localhost:4000/2024/06/04/csapplab0environment/">CSAPP LAB0 Environment</a></p>
+]]></content>
+      <categories>
+        <category>CSAPP</category>
+      </categories>
+      <tags>
+        <tag>CSAPP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CSAPP LAB0 Environment</title>
+    <url>/2024/06/04/csapplab0environment/</url>
+    <content><![CDATA[<h2 id="资源下载"><a href="#资源下载" class="headerlink" title="资源下载"></a>资源下载</h2><p>CSAPP LAB网址：<a href="https://csapp.cs.cmu.edu/3e/labs.html">https://csapp.cs.cmu.edu/3e/labs.html</a></p>
+<p>点击对应LAB后面的Self-Study Handout可以下载资源压缩包</p>
+<h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><p>我使用的电脑是M2的Mac Mini，由于arm gcc&#x2F;g++的-m编译参数中不支持32位或64位，因此选择搭建x86的Ubuntu docker来完成对实验代码的编译</p>
+<p>拉取Ubuntu20.04镜像，创建Ubuntu(x86)容器（默认是arm架构的容器，需要指定平台为amd64）</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker pull ubuntu:20.04</span><br><span class="line">docker run -it --platform linux/amd64 -v &quot;/Users/proc/csapp:/csapp&quot; --name=csapp ubuntu:20.04 /bin/bash</span><br></pre></td></tr></table></figure>
+
+<p>其中，-v “&#x2F;Users&#x2F;proc&#x2F;csapp:&#x2F;csapp” 将文件目录与容器目录进行共享以实现容器和本机的同步，这样可以在本机上写代码，docker上进行编译</p>
+<p>安装必要的软件包</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo apt install build-essential gcc-multilib gdb</span><br></pre></td></tr></table></figure>
+
+<p>在搭建好的docker容器内进入datalab目录，测试环境是否正常</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">make btest</span><br><span class="line">./btest</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2024/06/04/csapplab0environment/EnvironmentTest.png"><br>能够正常运行则说明环境搭建完成</p>
+<h2 id="踩坑"><a href="#踩坑" class="headerlink" title="踩坑"></a>踩坑</h2><h3 id="编译代码时报错-gcc-error-unrecognized-command-line-option-‘-m32’"><a href="#编译代码时报错-gcc-error-unrecognized-command-line-option-‘-m32’" class="headerlink" title="编译代码时报错 gcc: error: unrecognized command line option ‘-m32’"></a>编译代码时报错 gcc: error: unrecognized command line option ‘-m32’</h3><p>arm版gcc不支持-m32参数，目前没有合理的解决方案，最终选择搭建x86的Ubuntu来完成代码的编译工作</p>
+<h3 id="docker拉取软件包的速度过慢"><a href="#docker拉取软件包的速度过慢" class="headerlink" title="docker拉取软件包的速度过慢"></a>docker拉取软件包的速度过慢</h3><p>选择换源为国内的镜像源，更改位置在&#x2F;etc&#x2F;apt&#x2F;sources.list </p>
+<p>首先将原来的文件进行备份，更换其中内容后重新update即可</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp /etc/apt/sources.list /etc/apt/sources.list.bak</span><br><span class="line">modify /etc/apt/sources.list </span><br><span class="line">sudo apt-get update</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>CSAPP</category>
+      </categories>
+      <tags>
+        <tag>CSAPP</tag>
+      </tags>
+  </entry>
+</search>
